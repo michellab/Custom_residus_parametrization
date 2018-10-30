@@ -1,7 +1,7 @@
 import MDtraj as md
 import sklearn.metrics as sk1
 import parmed
-
+import get_
 
 list_pdb
 t = md.load('trajectory.h5', top=)
@@ -17,14 +17,14 @@ for bond in bonds
 	traj.n_frames
 	traj.save_mdcrd('')
 
-	QM_data= 
-	singlepointenergy= 
-	
+	QM_data=
+	singlepointenergy=
+
 	#return K
-	paramfit_fit_K= 
-	
-	#paramfit 
-	
+	paramfit_fit_K=
+
+	#paramfit
+
 	write paramfit_job_list
 
 	parmed.load.prmtop
