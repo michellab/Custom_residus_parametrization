@@ -1,0 +1,13 @@
+#V2 AUTO-GENERATED PARAMETER FILE - DO NOT MODIFY
+#
+# BOND INFORMATION:
+#### BOND	REQ	KR ####
+#
+# ANGLE PARAMETERS:
+#### ANGLE	KT	THEQ ####
+#
+# DIHEDRAL PARAMETERS:
+#### DIHEDRAL	TERM	KP	NP	PHASE ####
+	N CX CT CT	0	1	0	0
+        N CX CT CT      1       1       0       0 
+        N CX CT CT      2       1       0       0
