@@ -14,14 +14,14 @@ import os
 def make_missing_parms_parmck2(inputfile):
     os.system( 'parmchk2 -i  %s  -o frcmod -f mol2 -s 2 -o amber.frcmod' %(inputfile))
     tleapinput=open('temp.in','w')
-    tleapinput.writelines(['loadAmberParams amber.frcmod \n',  'source leaprc.protein.ff14SB \n'  ,  'input = loadmol2 %s \n '  %(inputfile) , 'saveAmberParm  input  input.prmtop input.inpcrd\n ', 'quit'])
+    tleapinput.writelines(['loadAmberParams amber.frcmod \n',  'source leaprc.protein.ff14SB \n'  ,  'input = loadmol2 %s \n '  %(inputfile) ,\
+    'saveAmberParm  input  input.prmtop input.inpcrd\n ', 'quit'])
     tleapinput.close()
     os.system( 'tleap -f temp.in' )
 
 def find_dihedrals(inputfile):
     make_missing_parms_parmck2(inputfile)
     all_dihedrals=[]
-    all_dihedrals_type=[]
     dihedrals_heavy=[]
     dihedrals_heavy_index=[]
     dihe=[]
@@ -45,7 +45,7 @@ def find_dihedrals(inputfile):
 
     for bond in heavy_bonds:
         all_dihedrals.append([])
-        all_dihedrals_type.append([])
+
         dihedrals_heavy.append([])
         for i  in range (len(dihe)) :
 
@@ -58,18 +58,38 @@ def find_dihedrals(inputfile):
                      all_dihedrals[-1].append(dihe[i])
                      ans = [' "%s" "%s" "%s" "%s" ' %( dihe[i].atom1.name, dihe[i].atom2.name,dihe[i].atom3.name,dihe[i].atom4.name)]
                      an = [ dihe[i].atom1.name, dihe[i].atom2.name,dihe[i].atom3.name,dihe[i].atom4.name]
-                     at = [dihe[i].atom1.type,dihe[i].atom2.type,dihe[i].atom3.type,dihe[i].atom4.type]
+
                      ai = [ dihe[i].atom1.idx, dihe[i].atom2.idx,dihe[i].atom3.idx,dihe[i].atom4.idx]
                      #ai = [ ' "%s" "%s" "%s" "%s" ' %(dihe[i].atom1.idx, dihe[i].atom2.idx,dihe[i].atom3.idx,dihe[i].atom4.idx)]
-                     if at not in all_dihedrals_type[-1] and ai not in  dihedrals_heavy_index:
-                         all_dihedrals_type[-1].append([dihe[i].atom1.type,dihe[i].atom2.type,dihe[i].atom3.type,dihe[i].atom4.type])
+
                      if dihe[i].atom1.atomic_number in [6, 7, 8, 16] and  dihe[i].atom4.atomic_number in [6, 7, 8, 16] and ai not in  dihedrals_heavy_index :
                             dihedrals_heavy[-1].append([dihe[i]])
-                            if dihe[i].atom2.type != 'CA' and dihe[i].atom3.type != 'CA'  :
+                            if dihe[i].atom2.type != 'CA' and dihe[i].atom3.type != 'CA'  :  # no aromatic or it will be a mess!
                                 dihedrals_heavy_name.append( ans)
                                 dihedrals_heavy_centralbond_name.append([an[1], an[2]])
                                 dihedrals_heavy_index.append(ai)
-    return all_dihedrals,   all_dihedrals_type, dihedrals_heavy, dihedrals_heavy_name, dihedrals_heavy_centralbond_name, dihedrals_heavy_index
+    torsion_names=[]
+    i=1
+    all_dihedrals_type=[]
+    for bond in dihedrals_heavy_centralbond_name:
+        bond.sort()
+        all_dihedrals_type.append([])
+        for i  in range (len(dihe)) :
+            d = [dihe[i].atom2.idx,dihe[i].atom3.idx]
+            d.sort()
+            if bond ==d :
+                at = [dihe[i].atom1.type,dihe[i].atom2.type,dihe[i].atom3.type,dihe[i].atom4.type,dihe[i].multiplicity]
+                if at not in all_dihedrals_type[-1] and ai not in  dihedrals_heavy_index:
+                    all_dihedrals_type[-1].append(at)
+
+        if ['CA' ,'N'] == bond:
+            torsion_names.append('PHI')
+        elif [ "C" , "CA" ] == bond :
+            torsion_names.append('PSI')
+        else :
+            torsion_names.append('CHI'+str(i) )
+            i+=1
+    return all_dihedrals,   all_dihedrals_type, dihedrals_heavy, dihedrals_heavy_name, torsion_names, dihedrals_heavy_index
 
 
 if __name__ == '__main__' :
