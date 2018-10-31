@@ -87,19 +87,10 @@ if __name__ =='__main__':
         res_name=  ' ' + args.res
         charge=  args.charge
         multiplicity= args.m
-        all_dihedrals, all_dihedrals_type, dihedrals_heavy, dihedral_heavy_name , dihedrals_heavy_centralbond_name, dihedrals_heavy_index= find_dihedrals(inputmol2)
+        all_dihedrals, all_dihedrals_type, dihedrals_heavy, dihedral_heavy_name , torsion_names , dihedrals_heavy_index= find_dihedrals(inputmol2)
         list_of_torsions =  dihedral_heavy_name
         #torsion_names_dict =[  'CHI1', 'CHI2' , 'CHI3' ,'CHI4', 'CHI5','CHI6', 'CHI7', 'CHI8' , 'CHI9' ,'CHI10', 'CHI11', 'CHI12','CHI13', 'CHI14', 'CHI15' , 'CHI16' ,'CHI17' , 'CHI18', 'CHI19']
-        torsion_names=[]
-        i=1
-        for bond in dihedrals_heavy_centralbond_name:
-            bond.sort()
 
-            if ['CA' ,'N'] == bond:                 torsion_names.append('PHI')
-            elif [ "C" , "CA" ] == bond :                torsion_names.append('PSI')
-            else :
-                torsion_names.append('CHI'+str(i) )
-                i+=1
 
 
 

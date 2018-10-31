@@ -50,6 +50,7 @@ def pepare_paramfit_job_files (prefix, nframes) :
     for line in temp_fitP.readline():
         new_fitP.writelines(line.replace('$PREFIX', prefix))
         new_fitP.writelines(line.replace('$NSTRUCT',  nframes))
+        new_fitP.writelines(line.replace('$PARAMFILE', prefix + '-P-fit.in' ))
     temp_fitP.close()
 
 
@@ -61,7 +62,7 @@ def pepare_paramfit_param_files (prefix,torsion_names, all_dihedrals_type) :
         for types in all_dihedrals_type[index]:
             for mult in range(type[4])
                 temp_fit.writelines('	%s %s %s %s	%s	1	0	0' %(type[0], type[1], type[2],type[3], mult  ) )
-
+    temp_fit.close()
 
 
 

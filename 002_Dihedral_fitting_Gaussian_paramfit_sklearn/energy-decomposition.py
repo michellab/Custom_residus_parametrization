@@ -149,10 +149,10 @@ def setupForcefields(system, space):
 
 
 
-if __name__ == "__main__":
+def singlepoint(topol, trajs)
  energies=[]
- for traj in sys.argv[2:]:    
-    top_file = sys.argv[1] #topology file
+ for traj in trajs :    
+    top_file = topol
     #traj = sys.argv[2] #collection of mdcrd/coordiantes
     
     #load each frame and use it as a coordinate 
@@ -193,7 +193,9 @@ if __name__ == "__main__":
     for energy in new_energies :     outputenergy.write(str(energy) + '\n')
 
 
-           
+if __name__ == "__main__":
+	    trajs =  sys.argv[2:]      
+	    topol = sys.argv[1] #topology file
                
 
 
