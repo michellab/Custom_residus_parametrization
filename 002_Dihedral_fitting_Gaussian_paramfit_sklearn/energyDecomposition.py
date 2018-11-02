@@ -1,5 +1,4 @@
-
-
+#! /home/marie/Utilities/sire.app/bin/python
 import os, sys, pickle,re#,argparse
 import mdtraj
 import math
@@ -42,7 +41,7 @@ coulomb_power = Parameter("coulomb power", 0,
 
 combining_rules = Parameter("combining rules", "arithmetic",
                             """Combining rules to use for the non-bonded interactions.""")
-  
+
 def createSystem(molecules):
     #print("Applying flexibility and zmatrix templates...")
     print("Creating the system...")
@@ -112,7 +111,7 @@ def setupForcefields(system, space):
     intranonbondedff = IntraCLJFF("molecules-intranonbonded")
 
     intranonbondedff.add(molecules)
-	
+
 
     # Here is the list of all forcefields
     forcefields = [internonbondedff, intrabondedff, intranonbondedff,]
@@ -124,8 +123,8 @@ def setupForcefields(system, space):
     system.setProperty("combiningRules", VariantProperty(combining_rules.val))
 
     total_nrg = internonbondedff.components().total() + \
-                intranonbondedff.components().total() + intrabondedff.components().total() 
-  
+                intranonbondedff.components().total() + intrabondedff.components().total()
+
     e_total = system.totalComponent()
     '''
     e_internonbondedff = system.totalComponent()
@@ -151,35 +150,35 @@ def setupForcefields(system, space):
 
 
 
-def singlepoint(topol, trajs)
+def singlepoint(topol, trajs):
  energies=[]
- for traj in trajs :    
+ for traj in trajs :
     top_file = topol
     #traj = sys.argv[2] #collection of mdcrd/coordiantes
-    
-    #load each frame and use it as a coordinate 
+
+    #load each frame and use it as a coordinate
     #mdtraj_top = mdtraj.load_prmtop(top_file)
     mdtraj_dcdfile = mdtraj.load_mdcrd(traj,top=top_file)
     nframes= len(mdtraj_dcdfile)
-    #create a folder to store the crds 
+    #create a folder to store the crds
     if not os.path.exists("rst7_sire_files"):
         os.makedirs("rst7_sire_files")
 
 
 
     print("reading the mdcrd file... %s frames" %(nframes))
-    for framenumber in range(0, nframes): 
-        #create a Sire system 
+    for framenumber in range(0, nframes):
+        #create a Sire system
         rst_file = "rst7_sire_files/%i.rst7" % framenumber
         mdtraj_dcdfile[framenumber].save_amberrst7("rst7_sire_files/%i.rst7" %(framenumber))
         amber = Amber()
         molecules, space = amber.readCrdTop(rst_file, top_file)
-        system=createSystem(molecules)     
+        system=createSystem(molecules)
         # Define forcefields
         system = setupForcefields(system, space)
         print(framenumber , system.energy())#.value())
         energies.append(system.energy().value())
-    
+
     print("removing folder...")
     cmd = "rm -r rst7_sire_files"
     os.system(cmd)
@@ -196,9 +195,5 @@ def singlepoint(topol, trajs)
     return [energy for energy in new_energies ]
 
 if __name__ == "__main__":
-	    trajs =  sys.argv[2:]      
+	    trajs =  sys.argv[2:]
 	    topol = sys.argv[1] #topology file
-               
-
-
-       

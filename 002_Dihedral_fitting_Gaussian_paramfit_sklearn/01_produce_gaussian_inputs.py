@@ -22,7 +22,7 @@ import argparse
 from  get_all_dihedral import find_dihedrals
 
 
-def main(list_of_atm,  dihedrals_heavy_index):
+def main(list_of_atm,  dihedrals_heavy_index, torsion_names):
 
     list_of_key={}
 
@@ -40,6 +40,7 @@ def main(list_of_atm,  dihedrals_heavy_index):
     for bond in range(len(list_of_atm)) :
 
       for angle in range(-180,+180,10) :
+        
         tleap_input_file.writelines( [ 'impose m  { 1 } {  { %s %s } }\n' %(list_of_atm[bond][0] , angle)])
         tleap_input_file.writelines( [ 'savemol2 m %s_%s.mol2 1\n' %(torsion_names[bond] , angle)] )
 
@@ -90,8 +91,5 @@ if __name__ =='__main__':
         all_dihedrals, all_dihedrals_type, dihedrals_heavy, dihedral_heavy_name , torsion_names , dihedrals_heavy_index= find_dihedrals(inputmol2)
         list_of_torsions =  dihedral_heavy_name
         #torsion_names_dict =[  'CHI1', 'CHI2' , 'CHI3' ,'CHI4', 'CHI5','CHI6', 'CHI7', 'CHI8' , 'CHI9' ,'CHI10', 'CHI11', 'CHI12','CHI13', 'CHI14', 'CHI15' , 'CHI16' ,'CHI17' , 'CHI18', 'CHI19']
-
-
-
-
-        main(dihedral_heavy_name, dihedrals_heavy_index)
+        print(torsion_names , dihedral_heavy_name)
+        main(dihedral_heavy_name, dihedrals_heavy_index, torsion_names)
