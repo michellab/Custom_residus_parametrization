@@ -27,12 +27,41 @@ def get_gaff2_parmcheck(input):
 
      os.system('parmchk2 -f mol2 -i %s -o gaff2.frcmod  -s  gaff2' %(input))
 
+def add_order():
+    F= open('amber.frcmod', 'r')
+    N=open('oneorder.frcmod','w')
+    line=F.readline()
+    while line[0:4] !='DIHE':
+        N.writelines(line)
+        line=F.readline()
+
+    N.writelines(line)
+    previous=F.readline()
+    line=F.readline()
+    next=F.readline()
+
+    while line[:6] not in ['IMPROP','NONBON' ]:
+        if line[0:11]!=previous[0:11]:
+                N.writelines( previous[0:11]+ '   1    0.000       180.000          -6.000     \n')
+        N.writelines(previous)
+        previous=line
+        line=next
+        next=F.readline()
+
+
+    N.writelines(previous)
+    N.writelines(line)
+    N.writelines(F.readlines())
+    N.close()
+
+
+
 def make_traj(prefix):
     list_pdb=open(prefix +'-listfiles')
     lines=list_pdb.readlines()
     first=lines.pop(0).replace(' \n','')
     t = md.load(first, top='input.prmtop')
-    print(lines)
+
     for i in range(len(lines)):
         filename=lines.pop(0).replace(' \n','')
         print(filename)
@@ -72,6 +101,7 @@ def pepare_paramfit_param_files (prefix,torsion_names, all_dihedrals_type) :
         #print(types)
         #    for mult in range(types[4]):
         if types[0] + types[1] +types[2]+types[3] not in added :
+        # order != mult   if order 1 3 6 / mult = 3
             count.append(0)
             added.append(types[0] + types[1] +types[2]+types[3])
             mult=0
@@ -89,13 +119,10 @@ if __name__=='__main__':
     inputmol2=sys.argv[1]
 
     all_dihedrals, all_dihedrals_type, dihedrals_heavy, dihedral_heavy_name ,torsion_names , dihedrals_heavy_index= find_dihedrals(inputmol2)
-    print (torsion_names)
-    for p in torsion_names:
-        print (p)
-        prefix = p + '_'
-        print(os.getcwd()+'/'+ prefix+'*')
+    add_order()
 
-        print ('HERE')
+    for p in torsion_names:
+        prefix = p + '_'
         extract_stationary_structures(prefix)
         nframes= make_traj(prefix)
         pepare_paramfit_job_files (prefix, nframes)

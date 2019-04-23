@@ -1,4 +1,4 @@
-#! /home/marie/Utilities/sire.app/bin/python
+#! home/marie/Utilities/sire.app/bin/python
 import os, sys, pickle,re#,argparse
 import mdtraj
 import math
@@ -44,7 +44,7 @@ combining_rules = Parameter("combining rules", "arithmetic",
 
 def createSystem(molecules):
     #print("Applying flexibility and zmatrix templates...")
-    print("Creating the system...")
+    #print("Creating the system...")
 
     moleculeNumbers = molecules.molNums()
     moleculeList = []
@@ -78,7 +78,7 @@ def createSystem(molecules):
 
 def setupForcefields(system, space):
 
-    print("Creating force fields... ")
+    #print("Creating force fields... ")
 
     all = system[MGName("all")]
     molecules = system[MGName("molecules")]
@@ -115,7 +115,7 @@ def setupForcefields(system, space):
 
     # Here is the list of all forcefields
     forcefields = [internonbondedff, intrabondedff, intranonbondedff,]
-    print(forcefields)
+    #print(forcefields)
     for forcefield in forcefields:
         system.add(forcefield)
 
@@ -140,9 +140,9 @@ def setupForcefields(system, space):
     # Add a monitor that calculates the average total energy and average energy
     # deltas - we will collect both a mean average and an zwanzig average
     system.add("total_energy", MonitorComponent(e_total, Average()))
-    system.add("internonbondedff_energy", MonitorComponent(e_internonbondedff, Average()))
-    system.add("intranonbondedff_energy", MonitorComponent(e_intranonbondedff , Average()))
-    system.add("intrabondedff_energy", MonitorComponent(e_intrabondedff , Average()))
+#    system.add("internonbondedff_energy", MonitorComponent(e_internonbondedff, Average()))
+#    system.add("intranonbondedff_energy", MonitorComponent(e_intranonbondedff , Average()))
+#    system.add("intrabondedff_energy", MonitorComponent(e_intrabondedff , Average()))
     return system
 
 
@@ -166,7 +166,7 @@ def singlepoint(topol, trajs):
 
 
 
-    print("reading the mdcrd file... %s frames" %(nframes))
+    #print("reading the mdcrd file... %s frames" %(nframes))
     for framenumber in range(0, nframes):
         #create a Sire system
         rst_file = "rst7_sire_files/%i.rst7" % framenumber
@@ -176,24 +176,27 @@ def singlepoint(topol, trajs):
         system=createSystem(molecules)
         # Define forcefields
         system = setupForcefields(system, space)
-        print(framenumber , system.energy())#.value())
+        #print(framenumber , system.energy())#.value())
         energies.append(system.energy().value())
 
-    print("removing folder...")
+    #print("removing folder...")
     cmd = "rm -r rst7_sire_files"
     os.system(cmd)
 
     minimum = min(energies)
     new_energies =[]
     for val in energies:
+        print(val)
         new_val = val - minimum
         # if new_val <1000 : new_energies.append(new_val)
         new_energies.append(new_val)
-    print(len(new_energies))
+    #print(len(new_energies))
     outputenergy=open('energySinglepoint.dat'  ,'w')
     for energy in new_energies :     outputenergy.write(str(energy) + '\n')
     return [energy for energy in new_energies ]
 
 if __name__ == "__main__":
-	    trajs =  sys.argv[2:]
-	    topol = sys.argv[1] #topology file
+
+    trajs =  sys.argv[2:]
+    topol = sys.argv[1] #topology file
+    singlepoint(topol, trajs)

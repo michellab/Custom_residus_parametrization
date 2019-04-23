@@ -6,7 +6,7 @@ This is an ugly but efficient script to generate conformations spaced from 10 de
 manually parse the generated mol2 files to gaussian input files.  \n \n \
 It is not necessarry but advised to rename your atoms in your input : CA CB C N ... as the script will try to assign PHI PSI and CHI\
 atomtypes will be assigned but won\'t be used in calculations \n\n \
-Known bugs : -parmchk2 doesn\'t know CX (The bug has been reported ) atom type (CA) so add it to to parmcheck file or change the CX to CT\
+Known bugs : -parmchk2 doesn\'t know CX atom type (CA) so add it to to parmcheck file or change the CX to CT\
              -The molecule to be parametrized can only be called "LIG" \
 \n\n                                          !!!!!!WARNING!!!!!!!!  \
                                           This script is not robust ! \
@@ -22,8 +22,7 @@ import argparse
 from  get_all_dihedral import find_dihedrals
 
 
-def main(list_of_atm,  dihedrals_heavy_index, torsion_names):
-
+def main(list_of_atm,  dihedrals_heavy_index, torsion_names ,theo):
     list_of_key={}
 
     tleap_input_file=open('tleap.in', 'w')
@@ -40,7 +39,7 @@ def main(list_of_atm,  dihedrals_heavy_index, torsion_names):
     for bond in range(len(list_of_atm)) :
 
       for angle in range(-180,+180,10) :
-        
+
         tleap_input_file.writelines( [ 'impose m  { 1 } {  { %s %s } }\n' %(list_of_atm[bond][0] , angle)])
         tleap_input_file.writelines( [ 'savemol2 m %s_%s.mol2 1\n' %(torsion_names[bond] , angle)] )
 
@@ -52,16 +51,17 @@ def main(list_of_atm,  dihedrals_heavy_index, torsion_names):
              if finp[-4:]=='mol2' and finp[:3] in ['PHI', 'PSI' , 'CHI']:
                 fi=open(finp, 'r')
                 fo=open('%s' %(finp[:-4]+'gau'), 'w')
-                fo.write('--Link1-- \n%%RWF=%s\n%%NoSave\n%%chk=%s \n#P b3lyp/6-31G* Opt=(ModRedundant,MaxCycle=400) Freq SCF=(Conver=6,MaxCycle=400) Pop=NoMBS\n \nparamfit run\n  \n%s    %s \n'  %(finp[:-5],finp[:-5],charge,multiplicity))
+                fo.write('--Link1-- \n%%RWF=%s\n%%NoSave\n%%chk=%s \n#P %s/6-31G* Opt=(ModRedundant,MaxCycle=400) Freq SCF=(Conver=6,MaxCycle=400) Pop=NoMBS\n \nparamfit run\n  \n%s    %s \n'  %(finp[:-5],finp[:-5],theo, charge,multiplicity))
 
                 while 'ATOM' not in fi.readline()  : continue
                 i=True
                 while i==True :
                         line=fi.readline().split()
                         if 'TRIPOS' not  in line[0] :
-                            #lineout=line[1][0]+'-' + line[5] + '-' + line[8]  + '    ' + line[2] +  '    ' + line[3] +  '    ' + line[4]  + '\n'
-
-                            lineout=line[1][0]+ '    ' + line[2] +  '    ' + line[3] +  '    ' + line[4]  + '\n'
+                            #with charges
+                            lineout=line[1][0]+'-' + line[5] + '-' + line[8]  + '    ' + line[2] +  '    ' + line[3] +  '    ' + line[4]  + '\n'
+                            #without charges
+                            #lineout=line[1][0]+ '    ' + line[2] +  '    ' + line[3] +  '    ' + line[4]  + '\n'
                             fo.write(lineout)
                         else:
                             i=False
@@ -70,8 +70,11 @@ def main(list_of_atm,  dihedrals_heavy_index, torsion_names):
                 #listdih=list_of_atoms[numb]
 
                 listdih= dihedrals_heavy_index[numb]
+                #print(str (torsion_names.index(finp[0:4].replace('_',''))) + ' ' +str(listdih[0])+ ' ' +str(listdih[1])+ ' '+ str(listdih[2])+ ' '+str(listdih[3]))
                 #fo.write('F'+str(list_of_atoms[numb][0])+'\nF'+str(list_of_atoms[numb][1])+'\nF'+str(list_of_atoms[numb][2])+'\nF'+str(list_of_atoms[numb][3])+'\n')
-                fo.write('D ' + str(listdih[0]) +' '+ str(listdih[1])+ ' '+ str(listdih[2])+ ' '+str(listdih[3])+ ' F\n')
+                #fo.write('F ' + str(listdih[0]+1) +' '+ str(listdih[1]+1)+ ' '+ str(listdih[2]+1)+ ' '+str(listdih[3]+1)+ ' F\n')
+                print(dihedrals_heavy_index[numb])
+                fo.write('D ' + str(listdih[0]+1) +' '+ str(listdih[1]+1)+ ' '+ str(listdih[2]+1)+ ' '+str(listdih[3]+1)+ ' F\n')
                 fo.close()
                 fi.close
 
@@ -82,8 +85,9 @@ if __name__ =='__main__':
         parser.add_argument("-res", type=str, default='LIG', help='residue name : script will fail if wrong (default: system[HMR]_REST1.XXX.prmtop)')
         parser.add_argument("-charge", type=int, default=0, help='charge of the molecule  (default: %(default)s)')
         parser.add_argument("-m", type=float, default=1, help="multiplicity (default: %(default)s)")
+        parser.add_argument("-theo", type=str, default='HF', help="theory possible blyp , HF ... (default: %(default)s)")
         args = parser.parse_args()
-
+        theo = args.theo
         inputmol2= args.f
         res_name=  ' ' + args.res
         charge=  args.charge
@@ -92,4 +96,4 @@ if __name__ =='__main__':
         list_of_torsions =  dihedral_heavy_name
         #torsion_names_dict =[  'CHI1', 'CHI2' , 'CHI3' ,'CHI4', 'CHI5','CHI6', 'CHI7', 'CHI8' , 'CHI9' ,'CHI10', 'CHI11', 'CHI12','CHI13', 'CHI14', 'CHI15' , 'CHI16' ,'CHI17' , 'CHI18', 'CHI19']
         print(torsion_names , dihedral_heavy_name)
-        main(dihedral_heavy_name, dihedrals_heavy_index, torsion_names)
+        main(dihedral_heavy_name, dihedrals_heavy_index, torsion_names,theo)
