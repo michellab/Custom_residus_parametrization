@@ -13,16 +13,16 @@ import itertools
 
 
 
-def make_missing_parms_parmck2(inputfile):
+def make_missing_parms_parmck2(inputfile, frcmod='amber.frcmod'):
     os.system( 'parmchk2 -i  %s  -o frcmod -f mol2 -s 2 -o amber.frcmod -a "Y" ' %(inputfile))
     tleapinput=open('temp.in','w')
-    tleapinput.writelines(['loadAmberParams amber.frcmod \n',  'source leaprc.protein.ff14SB \n'  ,  'input = loadmol2 %s \n '  %(inputfile) ,\
+    tleapinput.writelines([  'source leaprc.protein.ff14SB \n'  , 'loadAmberParams %s \n'%(frcmod), 'input = loadmol2 %s \n '  %(inputfile ) ,\
     'saveAmberParm  input  input.prmtop input.inpcrd\n ', 'quit'])
     tleapinput.close()
     os.system( 'tleap -f temp.in >tleap' )
 
-def find_dihedrals(inputfile):
-    make_missing_parms_parmck2(inputfile)
+def find_dihedrals(inputfile, frcmod='amber.frcmod'):
+    make_missing_parms_parmck2(inputfile, frcmod=frcmod)
     all_dihedrals=[[]]
     dihedrals_heavy=[[]]
     dihedrals_heavy_index=[]
@@ -105,6 +105,106 @@ def find_dihedrals(inputfile):
             j+=1
 
     return all_dihedrals,   all_dihedrals_type, dihedrals_heavy, dihedrals_heavy_name, torsion_names, dihedrals_heavy_index
+
+
+
+def find_dihedrals_mod(inputfile, frcmod='amber.frcmod'):
+    make_missing_parms_parmck2(inputfile, frcmod=frcmod)
+    all_dihedrals=[[]]
+    dihedrals_heavy=[[]]
+    dihedrals_heavy_index=[]
+    dihe=[]
+    heavy_bonds=[]
+    dihedrals_heavy_centralbond_name=[]
+    dihedrals_heavy_name=[]
+    topol = parmed.load_file( 'input.prmtop')
+    for resid in topol.residues:
+             for atom in resid.atoms:
+
+                 if atom.atomic_number in [6, 7, 8, 16]: # C,P N , O and S
+
+                    for bond in atom.bonds :
+                        b = [bond.atom1.idx , bond.atom2.idx]
+                        b.sort()
+                        if b not in heavy_bonds and bond.atom1.atomic_number in [6, 7, 8, 16] and   bond.atom2.atomic_number in[6, 7, 8, 16]   and sorted([bond.atom1.type ,  bond.atom2.type]) not in [sorted([e[0], e[1]]) for e in  itertools.combinations_with_replacement(('CA',  'C' ,'CV' , 'N*' , 'NB','O' ), 2) ]                        and bond.atom1.name[-1].isalpha() and bond.atom2.name[-1].isalpha() :
+                            heavy_bonds.append(b)
+
+
+
+
+    dihe= topol.dihedrals
+
+    for bond in heavy_bonds:
+        if all_dihedrals[-1] != [] :
+            all_dihedrals.append([])
+            dihedrals_heavy.append([])
+        for i  in range (len(dihe)) :
+             d = [dihe[i].atom2.idx,dihe[i].atom3.idx]
+             d.sort()
+             if bond ==d :
+                 #all_dihedrals[-1].append(dihe[i])
+                 if dihe[i] not in  all_dihedrals[-1]:
+
+                     ans = [' "%s" "%s" "%s" "%s" ' %( dihe[i].atom1.name, dihe[i].atom2.name,dihe[i].atom3.name,dihe[i].atom4.name)]
+                     an = [ dihe[i].atom1.name, dihe[i].atom2.name,dihe[i].atom3.name,dihe[i].atom4.name]
+
+                     ai = [ dihe[i].atom1.idx, dihe[i].atom2.idx,dihe[i].atom3.idx,dihe[i].atom4.idx]
+                     #ai = [ ' "%s" "%s" "%s" "%s" ' %(dihe[i].atom1.idx, dihe[i].atom2.idx,dihe[i].atom3.idx,dihe[i].atom4.idx)]
+                     all_dihedrals[-1].append(dihe[i])
+                     if dihe[i].atom1.atomic_number in [6, 7, 8, 16] and  dihe[i].atom4.atomic_number in [6, 7, 8, 16] and ai not in  dihedrals_heavy_index:
+                            dihedrals_heavy[-1].append([dihe[i]])
+#                            if dihe[i].atom2.type != 'CA' and dihe[i].atom3.type != 'CA'  :  # no aromatic or it will be a mess!
+                            d=[an[1], an[2]]
+                            d.sort()
+
+                            if d not in dihedrals_heavy_centralbond_name   :
+
+                             dihedrals_heavy_centralbond_name.append(d)
+                             dihedrals_heavy_index.append(ai)
+                             dihedrals_heavy_name.append( ans)
+    torsion_names=[]
+    j=1
+    all_dihedrals_type=[]
+    all_dihedrals_type_index=[]
+    for bond in dihedrals_heavy_centralbond_name:
+
+        bond.sort()
+
+        all_dihedrals_type.append([])
+        all_dihedrals_type_index.append([])
+        for i  in range (len(dihe)) :
+            if  dihe[i].improper == False :
+                d = [dihe[i].atom2.name,dihe[i].atom3.name]
+                d.sort()
+                if bond ==d :
+                    print(bond)
+                    #at = [dihe[i].atom1.type,dihe[i].atom2.type,dihe[i].atom3.type,dihe[i].atom4.type , dihe[i].type.per]
+                    at = [dihe[i].atom1.type,dihe[i].atom2.type,dihe[i].atom3.type,dihe[i].atom4.type ]
+                    if at not in all_dihedrals_type[-1]  : #and ai not in  dihedrals_heavy_index:
+                        all_dihedrals_type[-1].append(at)
+
+                    at_index = [dihe[i].atom1.idx,dihe[i].atom2.idx,dihe[i].atom3.idx,dihe[i].atom4.idx , all_dihedrals_type[-1].index(at) ]
+
+                    if at_index not in all_dihedrals_type_index[-1]  :
+                        #print('acc' ,  at_index)
+                        all_dihedrals_type_index[-1].append(at_index)
+                    #else :print(at_index)
+                    ### ---> return all indexes of atoms around the same bond and last column is the type of dihedral by reference to all_dihedrals_type
+
+        if ['CA' ,'N'] == bond:
+            torsion_names.append('PHI')
+        elif [ "C" , "CA" ] == bond :
+            torsion_names.append('PSI')
+        elif [ "C" , "N" ] == bond :  #should not append : omega angle
+            torsion_names.append('OME')
+        else :
+            torsion_names.append('CHI'+str(j) )
+            j+=1
+
+    return all_dihedrals,   all_dihedrals_type, dihedrals_heavy, dihedrals_heavy_name, torsion_names, dihedrals_heavy_index ,all_dihedrals_type_index
+
+
+
 
 
 if __name__ == '__main__' :
